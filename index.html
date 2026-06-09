@@ -71,7 +71,6 @@
 
         .form-group {
             margin-bottom: 20px;
-            position: relative;
         }
 
         label {
@@ -127,13 +126,6 @@
             box-shadow: 0 6px 25px rgba(37, 211, 102, 0.5);
             filter: brightness(1.1);
         }
-
-        .status {
-            margin-top: 15px;
-            text-align: center;
-            font-size: 14px;
-            font-weight: 600;
-        }
     </style>
 </head>
 <body>
@@ -154,80 +146,34 @@
             <input type="tel" id="phone" required autocomplete="tel" placeholder="Ej: 3815727447">
         </div>
         <button type="submit" id="submitBtn">
-            <span id="btnText">Registrate en 10 segundos y recibí la info por WhatsApp</span>
+            <span>Registrate en 10 segundos y recibí la info por WhatsApp</span>
         </button>
     </form>
-    <div id="statusMessage" class="status"></div>
 </div>
 
 <script>
-    const PIXEL_ID = 'TU_PIXEL_ID';
-    const ACCESS_TOKEN = 'TU_ACCESS_TOKEN_DE_CAPI';
     const WHATSAPP_NUMBER = '5493815727447';
 
-    document.getElementById('leadForm').addEventListener('submit', async function(e) {
+    document.getElementById('leadForm').addEventListener('submit', function(e) {
         e.preventDefault();
         
-        const statusDiv = document.getElementById('statusMessage');
         const fullname = document.getElementById('fullname').value.trim();
         const email = document.getElementById('email').value.trim().toLowerCase();
         const phone = document.getElementById('phone').value.replace(/\D/g, '');
 
-        if(phone.length < 7) {
-            statusDiv.style.color = '#ef4444';
-            statusDiv.innerText = 'Por favor, ingresá un número de teléfono válido.';
-            return;
-        }
-
-        statusDiv.style.color = '#25d366';
-        statusDiv.innerText = 'Abriendo WhatsApp...';
-
-        // --- ENVÍO SILENCIOSO A LA API DE FACEBOOK (Sin detener el flujo) ---
-        try {
-            const hashedEmail = await sha256(email);
-            const hashedPhone = await sha256(phone);
-
-            const payload = {
-                data: [{
-                    event_name: 'Lead',
-                    event_time: Math.floor(Date.now() / 1000),
-                    action_source: 'website',
-                    user_data: { em: [hashedEmail], ph: [hashedPhone] }
-                }]
-            };
-
-            fetch(`https://facebook.com{PIXEL_ID}/events?access_token=${ACCESS_TOKEN}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            }).catch(e => console.log('Tracking diferido'));
-
-        } catch (error) {
-            console.error('Error de cifrado omitido');
-        }
-
-        // --- REDIRECCIÓN INMEDIATA COMPATIBLE CON MÓVILES ---
-        // Generamos el texto formateado
+        // Formateo estricto del mensaje de texto para WhatsApp
         const textoMensaje = `¡Nuevo Registro Recibido!\n\n👤 *Nombre:* ${fullname}\n📧 *Email:* ${email}\n📱 *Teléfono:* ${phone}`;
         
-        // Usamos el enlace wa.me oficial directo para celulares, procesado sin retrasos en la misma pestaña (_self)
+        // Enlace directo nativo sin intermediarios de script externos
         const urlWhatsApp = `https://wa.me{WHATSAPP_NUMBER}?text=${encodeURIComponent(textoMensaje)}`;
         
-        // Limpiamos el formulario antes de irnos
         document.getElementById('leadForm').reset();
         
-        // Ejecución nativa instantánea (Bypassea cualquier bloqueador de Chrome/Safari)
-        window.open(urlWhatsApp, '_self');
+        // Redirección directa en la pestaña activa
+        window.location.href = urlWhatsApp;
     });
-
-    async function sha256(message) {
-        const msgBuffer = new TextEncoder().encode(message);
-        const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-        const hashArray = Array.from(new Uint8Array(hashBuffer));
-        return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-    }
 </script>
 
 </body>
-    </html>
-                                                      
+            </html>
+            

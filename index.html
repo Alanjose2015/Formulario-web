@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro Exclusivo</title>
+    <style>
+        :root {
+            --primary-glow: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%);
+            --btn-glow: linear-gradient(135deg, #25d366 0%, #128c7e 100%);
+            --dark-bg: #0f172a;
+            --card-bg: #1e293b;
+            --text-light: #f8fafc;
+            --input-bg: #334155;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--dark-bg);
+            background-image: radial-gradient(circle at top right, rgba(0, 242, 254, 0.15), transparent 40%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        /* Contenedor con animación de pulso de brillo */
+        .form-container {
+            background: var(--card-bg);
+            padding: 40px 30px;
+            border-radius: 20px;
+            box-shadow: 0 0 35px rgba(0, 242, 254, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            width: 100%;
+            max-width: 420px;
+            backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
+            animation: glowPulse 4s infinite alternate;
+        }
+
+        @keyframes glowPulse {
+            0% { box-shadow: 0 0 30px rgba(0, 242, 254, 0.15); }
+            100% { box-shadow: 0 0 50px rgba(0, 242, 254, 0.35); }
+        }
+
+        .form-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--primary-glow);
+        }
+
+        h2 {
+            color: var(--text-light);
+            margin-top: 0;
+            margin-bottom: 25px;
+            text-align: center;
+            font-size: 26px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            background: var(--primary-glow);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #94a3b8;
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        input {
+            width: 100%;
+            padding: 14px 16px;
+            background-color: var(--input-bg);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            box-sizing: border-box;
+            font-size: 16px;
+            color: var(--text-light);
+            transition: all 0.25s ease;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #00f2fe;
+            background-color: #1e293b;
+            box-shadow: 0 0 15px rgba(0, 242, 254, 0.35);
+        }
+
+        input::placeholder {
+            color: #64748b;
+        }
+
+        /* Botón de conversión optimizado */
+        button {
+            width: 100%;
+            background: var(--btn-glow);
+            color: white;
+            border: none;
+            padding: 16px 20px;
+            font-size: 15px;
+            font-weight: 700;
+            border-radius: 12px;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(37, 211, 102, 0.3);
+            transition: all 0.3s ease;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            line-height: 1.4;
+            text-align: center;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(37, 211, 102, 0.5);
+            filter: brightness(1.1);
+        }
+
+        button:disabled {
+            background: #475569;
+            box-shadow: none;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Spinner de carga */
+        .spinner {
+            display: none;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 0.8s ease infinite;
+            margin-left: 10px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .status {
+            margin-top: 15px;
+            text-align: center;
+            font-size: 14px;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+
+<div class="form-container">
+    <h2>Registrate aquí</h2>
+    <form id="leadForm">
+        <div class="form-group">
+            <label for="fullname">Nombre Completo</label>
+            <input type="text" id="fullname" required autocomplete="name" placeholder="Juan Pérez">
+        </div>
+        <div class="form-group">
+            <label for="email">Correo Electrónico</label>
+            <input type="email" id="email" required autocomplete="email" placeholder="ejemplo@correo.com">
+        </div>
+        <div class="form-group">
+            <label for="phone">Teléfono (WhatsApp)</label>
+            <input type="tel" id="phone" required autocomplete="tel" placeholder="Ej: 3815727447">
+        </div>
+        <button type="submit" id="submitBtn">
+            <span id="btnText">Registrate en 10 segundos y recibí la info por WhatsApp</span>
+            <div class="spinner" id="btnSpinner"></div>
+        </button>
+    </form>
+    <div id="statusMessage" class="status"></div>
+</div>
+
+<script>
+    const PIXEL_ID = 'TU_PIXEL_ID';
+    const ACCESS_TOKEN = 'TU_ACCESS_TOKEN_DE_CAPI';
+    const WHATSAPP_NUMBER = '5493815727447';
+
+    document.getElementById('leadForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const submitBtn = document.getElementById('submitBtn');
+        const btnText = document.getElementById('btnText');
+        const btnSpinner = document.getElementById('btnSpinner');
+        const statusDiv = document.getElementById('statusMessage');
+        
+        const fullname = document.getElementById('fullname').value.trim();
+        const email = document.getElementById('email').value.trim().toLowerCase();
+        
+        // Limpieza de caracteres no numéricos del teléfono para evitar fallas en la URL
+        const phone = document.getElementById('phone').value.replace(/\D/g, '');
+
+        if(phone.length < 7) {
+            statusDiv.style.color = '#ef4444';
+            statusDiv.innerText = 'Por favor, ingresá un número de teléfono válido.';
+            return;
+        }
+
+        // Activación del estado de carga en el botón
+        submitBtn.disabled = true;
+        btnSpinner.style.display = 'inline-block';
+        statusDiv.style.color = '#00f2fe';
+        statusDiv.innerText = 'Enviando conversión...';
+
+        // --- ENVIAR A META API ---
+        try {
+            const hashedEmail = await sha256(email);
+            const hashedPhone = await sha256(phone);
+
+            const payload = {
+                data: [{
+                    event_name: 'Lead',
+                    event_time: Math.floor(Date.now() / 1000),
+                    action_source: 'website',
+                    user_data: {
+                        em: [hashedEmail],
+                        ph: [hashedPhone]
+                    }
+                }]
+            };
+
+            await fetch(`https://facebook.com{PIXEL_ID}/events?access_token=${ACCESS_TOKEN}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+        } catch (error) {
+            console.error('Error de tracking omitido para no trabar al usuario:', error);
+        }
+
+        // --- ARMAR MENSAJE Y REDIRIGIR ---
+        const textoMensaje = `¡Nuevo Registro Recibido!\n\n` +
+                             `👤 *Nombre:* ${fullname}\n` +
+                             `📧 *Email:* ${email}\n` +
+                             `📱 *Teléfono:* ${phone}`;
+
+        const urlWhatsApp = `https://whatsapp.com{WHATSAPP_NUMBER}&text=${encodeURIComponent(textoMensaje)}`;
+
+        statusDiv.style.color = '#25d366';
+        statusDiv.innerText = '¡Abriendo WhatsApp!';
+
+        setTimeout(() => {
+            document.getElementById('leadForm').reset();
+            submitBtn.disabled = false;
+            btnSpinner.style.display = 'none';
+            statusDiv.innerText = '';
+            
+            // Envía directamente en la pestaña activa para evitar bloqueadores de pop-ups en celulares
+            window.location.href = urlWhatsApp;
+        }, 1000);
+    });
+
+    async function sha256(message) {
+        const msgBuffer = new TextEncoder().encode(message);
+        const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+</script>
+
+</body>
+  </html>
+  

@@ -27,7 +27,6 @@
             box-sizing: border-box;
         }
 
-        /* Contenedor con animación de pulso de brillo */
         .form-container {
             background: var(--card-bg);
             padding: 40px 30px;
@@ -104,11 +103,6 @@
             box-shadow: 0 0 15px rgba(0, 242, 254, 0.35);
         }
 
-        input::placeholder {
-            color: #64748b;
-        }
-
-        /* Botón de conversión optimizado */
         button {
             width: 100%;
             background: var(--btn-glow);
@@ -132,29 +126,6 @@
             transform: translateY(-2px);
             box-shadow: 0 6px 25px rgba(37, 211, 102, 0.5);
             filter: brightness(1.1);
-        }
-
-        button:disabled {
-            background: #475569;
-            box-shadow: none;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        /* Spinner de carga */
-        .spinner {
-            display: none;
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(255,255,255,0.3);
-            border-radius: 50%;
-            border-top-color: white;
-            animation: spin 0.8s ease infinite;
-            margin-left: 10px;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
         }
 
         .status {
@@ -184,7 +155,6 @@
         </div>
         <button type="submit" id="submitBtn">
             <span id="btnText">Registrate en 10 segundos y recibí la info por WhatsApp</span>
-            <div class="spinner" id="btnSpinner"></div>
         </button>
     </form>
     <div id="statusMessage" class="status"></div>
@@ -198,15 +168,9 @@
     document.getElementById('leadForm').addEventListener('submit', async function(e) {
         e.preventDefault();
         
-        const submitBtn = document.getElementById('submitBtn');
-        const btnText = document.getElementById('btnText');
-        const btnSpinner = document.getElementById('btnSpinner');
         const statusDiv = document.getElementById('statusMessage');
-        
         const fullname = document.getElementById('fullname').value.trim();
         const email = document.getElementById('email').value.trim().toLowerCase();
-        
-        // Limpieza de caracteres no numéricos del teléfono para evitar fallas en la URL
         const phone = document.getElementById('phone').value.replace(/\D/g, '');
 
         if(phone.length < 7) {
@@ -215,13 +179,10 @@
             return;
         }
 
-        // Activación del estado de carga en el botón
-        submitBtn.disabled = true;
-        btnSpinner.style.display = 'inline-block';
-        statusDiv.style.color = '#00f2fe';
-        statusDiv.innerText = 'Enviando conversión...';
+        statusDiv.style.color = '#25d366';
+        statusDiv.innerText = 'Abriendo WhatsApp...';
 
-        // --- ENVIAR A META API ---
+        // --- ENVÍO SILENCIOSO A LA API DE FACEBOOK (Sin detener el flujo) ---
         try {
             const hashedEmail = await sha256(email);
             const hashedPhone = await sha256(phone);
@@ -231,42 +192,32 @@
                     event_name: 'Lead',
                     event_time: Math.floor(Date.now() / 1000),
                     action_source: 'website',
-                    user_data: {
-                        em: [hashedEmail],
-                        ph: [hashedPhone]
-                    }
+                    user_data: { em: [hashedEmail], ph: [hashedPhone] }
                 }]
             };
 
-            await fetch(`https://facebook.com{PIXEL_ID}/events?access_token=${ACCESS_TOKEN}`, {
+            fetch(`https://facebook.com{PIXEL_ID}/events?access_token=${ACCESS_TOKEN}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
-            });
+            }).catch(e => console.log('Tracking diferido'));
+
         } catch (error) {
-            console.error('Error de tracking omitido para no trabar al usuario:', error);
+            console.error('Error de cifrado omitido');
         }
 
-        // --- ARMAR MENSAJE Y REDIRIGIR ---
-        const textoMensaje = `¡Nuevo Registro Recibido!\n\n` +
-                             `👤 *Nombre:* ${fullname}\n` +
-                             `📧 *Email:* ${email}\n` +
-                             `📱 *Teléfono:* ${phone}`;
-
-        const urlWhatsApp = `https://whatsapp.com{WHATSAPP_NUMBER}&text=${encodeURIComponent(textoMensaje)}`;
-
-        statusDiv.style.color = '#25d366';
-        statusDiv.innerText = '¡Abriendo WhatsApp!';
-
-        setTimeout(() => {
-            document.getElementById('leadForm').reset();
-            submitBtn.disabled = false;
-            btnSpinner.style.display = 'none';
-            statusDiv.innerText = '';
-            
-            // Envía directamente en la pestaña activa para evitar bloqueadores de pop-ups en celulares
-            window.location.href = urlWhatsApp;
-        }, 1000);
+        // --- REDIRECCIÓN INMEDIATA COMPATIBLE CON MÓVILES ---
+        // Generamos el texto formateado
+        const textoMensaje = `¡Nuevo Registro Recibido!\n\n👤 *Nombre:* ${fullname}\n📧 *Email:* ${email}\n📱 *Teléfono:* ${phone}`;
+        
+        // Usamos el enlace wa.me oficial directo para celulares, procesado sin retrasos en la misma pestaña (_self)
+        const urlWhatsApp = `https://wa.me{WHATSAPP_NUMBER}?text=${encodeURIComponent(textoMensaje)}`;
+        
+        // Limpiamos el formulario antes de irnos
+        document.getElementById('leadForm').reset();
+        
+        // Ejecución nativa instantánea (Bypassea cualquier bloqueador de Chrome/Safari)
+        window.open(urlWhatsApp, '_self');
     });
 
     async function sha256(message) {
@@ -278,5 +229,5 @@
 </script>
 
 </body>
-  </html>
-  
+    </html>
+                                                      
